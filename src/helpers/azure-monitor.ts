@@ -31,6 +31,14 @@ import { IncomingMessage } from "node:http";
 import { USER_DETAILS_ADMIN_DEMO } from "../auth/user-details-demo.js";
 
 export function initializeTelemetry() {
+  // Check if Azure Monitor connection string is available
+  const connectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING || process.env.AZURE_MONITOR_CONNECTION_STRING;
+  
+  if (!connectionString && process.env.NODE_ENV === 'development') {
+    console.log('Azure Monitor telemetry disabled for local development. Set APPLICATIONINSIGHTS_CONNECTION_STRING to enable.');
+    return;
+  }
+
   // Filter using HTTP instrumentation configuration
   const httpInstrumentationConfig: HttpInstrumentationConfig = {
     enabled: true,
@@ -63,6 +71,11 @@ export function initializeTelemetry() {
       mongoDb: { enabled: true },
     },
   };
+
+  // Add connection string if available
+  if (connectionString) {
+    options.connectionString = connectionString;
+  }
 
   addSpanProcessor(options);
   addOTLPExporter(options);
